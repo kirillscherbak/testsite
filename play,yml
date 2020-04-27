@@ -1,0 +1,38 @@
+- name: "test"
+  hosts: all
+  tasks:
+  - name: install packages
+    apt:
+      pkg: 
+      - nginx 
+      - zsh 
+      - wget
+   - name: start nginx
+    service:
+      name: nginx
+      state: started
+  - name: copy the nginx config file and restart nginx
+    copy:
+      src: files/site.cfg
+      dest: /etc/nginx/sites-available/default
+    become: yes
+  - name: copy the content of the web site
+    git:
+      repo: 'https://github.com/kirillscherbak/testsite.git'
+      dest: /var/www/test
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
+  - name: sysctl fs files max
+    sysctl: name=fs.file-max value=1204000 state=present
+  - name: sysctl somaxconn
+    sysctl: name=net.core.somaxconn value=65535 state=present
+  - name: Set up multiple authorized keys
+    authorized_key:
+      user: root
+      state: present
+      key: '{{ item }}'
+    with_file:
+      - keys/1
+      - keys/2
